@@ -1,9 +1,11 @@
 # pylint: disable=invalid-name, no-member, too-few-public-methods
 
+from unittest import skipIf
 from unittest.mock import Mock, patch
 
 from nose.tools import assert_is_none, assert_list_equal, assert_true
 
+from src.constants import SKIP_REAL
 from src.services import get_todos, get_uncompleted_todos
 
 
@@ -78,23 +80,21 @@ class TestUncompletedTodos(object):
         assert_list_equal(uncompleted_todos, [])
 
 
-class TestIntegration(object):
+@skipIf(SKIP_REAL, 'Skipping tests that hit the real API server.')
+def test_integration_contract():
+    actual = get_todos()
+    actual_keys = actual.json().pop().keys()
 
-    @staticmethod
-    def test_integration_contract():
-        actual = get_todos()
-        actual_keys = actual.json().pop().keys()
+    with patch('src.services.requests.get') as mock_get:
+        mock_get.return_value.ok = True
+        mock_get.return_value.json.return_value = [{
+            'userId': 1,
+            'id': 1,
+            'title': 'Make the bed',
+            'completed': False
+        }]
 
-        with patch('src.services.requests.get') as mock_get:
-            mock_get.return_value.ok = True
-            mock_get.return_value.json.return_value = [{
-                'userId': 1,
-                'id': 1,
-                'title': 'Make the bed',
-                'completed': False
-            }]
+        mocked = get_todos()
+        mocked_keys = mocked.json().pop().keys()
 
-            mocked = get_todos()
-            mocked_keys = mocked.json().pop().keys()
-
-        assert_list_equal(list(actual_keys), list(mocked_keys))
+    assert_list_equal(list(actual_keys), list(mocked_keys))
