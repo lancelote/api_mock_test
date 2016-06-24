@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name, no-member, too-few-public-methods
 
-import math
 from unittest.mock import Mock, patch
 
 from nose.tools import assert_is_none, assert_list_equal, assert_true
